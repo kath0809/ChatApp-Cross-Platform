@@ -1,3 +1,4 @@
+import CustomKeyboardView from "@/components/CustomKeyboradView";
 import Loading from "@/components/Loading";
 import { Octicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -35,7 +36,7 @@ export default function SignIn() {
   };
 
   return (
-    <View className="flex-1">
+    <CustomKeyboardView>
       <StatusBar style="dark" />
       <View
         style={{ paddingTop: hp(8), paddingHorizontal: wp(5) }}
@@ -139,6 +140,6 @@ export default function SignIn() {
           </View>
         </View>
       </View>
-    </View>
+    </CustomKeyboardView>
   );
 }
