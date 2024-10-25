@@ -3,25 +3,30 @@ import React, {
   useState,
   useEffect,
   useContext,
+  ReactNode,
 } from "react";
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  User,
+} from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 export const AuthContext = createContext();
-
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(undefined);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setIsAuthenticated(true);
         setUser(user);
+        setIsAuthenticated(true);
       } else {
-        setIsAuthenticated(false);
         setUser(null);
+        setIsAuthenticated(false);
       }
     });
     return unsub;
@@ -33,41 +38,47 @@ export const AuthContextProvider = ({ children }) => {
       setUser(response.user);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error(error);
+      console.error("Login failed", error);
     }
   };
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      await auth.signOut();
       setUser(null);
       setIsAuthenticated(false);
     } catch (error) {
-      console.error(error);
+      console.error("Logout failed", error);
     }
   };
 
   const register = async (email, password, username, profileUrl) => {
     try {
-      const response = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('response.user :', response?.user);
+      const response = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      console.log("response.user: ", response?.user);
 
       await setDoc(doc(db, "users", response?.user?.uid), {
         username,
         profileUrl,
-        userId: response?.user?.uid
+        userId: response?.user?.uid,
       });
+
       return { success: true, data: response?.user };
     } catch (error) {
       let msg = error.message;
-      if (msg.includes('(auth/invalid-email)')) msg = 'Invalid email';
-      return { success: false, msg: error.message };
+      if (msg.includes("(auth/invalid-email)")) msg = "Invalid email";
+      return { success: false, msg };
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, login, register, logout }}>
+      value={{ user, isAuthenticated, login, logout, register }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -77,7 +88,7 @@ export const useAuth = () => {
   const value = useContext(AuthContext);
 
   if (!value) {
-    throw new Error("useAuth must be used within AuthContextProvider");
+    throw new Error("useAuth must be used within an AuthContextProvider");
   }
   return value;
 };
