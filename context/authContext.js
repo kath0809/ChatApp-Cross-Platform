@@ -9,7 +9,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  User,
+  signOut,
 } from "firebase/auth";
 import { auth, db } from "../firebaseConfig";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -21,10 +21,11 @@ export const AuthContextProvider = ({ children }) => {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
-        console.log("Authorised user: ", user);
+      // console.log("Authorised user: ", user);
       if (user) {
         setUser(user);
         setIsAuthenticated(true);
+        updateUserData(user.uid);
       } else {
         setUser(null);
         setIsAuthenticated(false);
@@ -33,23 +34,42 @@ export const AuthContextProvider = ({ children }) => {
     return unsub;
   }, []);
 
+  const updateUserData = async (userId) => {
+    const docRef = doc(db, "users", userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      let data = docSnap.data();
+      setUser({
+        ...user,
+        username: data.username,
+        profileUrl: data.profileUrl,
+        userId: data.userId,
+      });
+    }
+  };
+
   const login = async (email, password) => {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
-      setUser(response.user);
-      setIsAuthenticated(true);
+      return { success: true };
     } catch (error) {
-      console.error("Login failed", error);
+      let msg = error.message;
+      if (msg.includes("(auth/invalid-email)")) msg = "Invalid email";
+      if (msg.includes("(auth/invalid-credential)"))
+        msg = "Wrong email or password";
+      return { success: false, msg };
     }
   };
 
   const logout = async () => {
     try {
-      await auth.signOut();
-      setUser(null);
-      setIsAuthenticated(false);
+      await signOut(auth);
+      return { success: true };
     } catch (error) {
-      console.error("Logout failed", error);
+      let msg = error.message;
+      if (msg.includes("(auth/invalid-email)")) msg = "Invalid email";
+
+      return { success: false, msg };
     }
   };
 
@@ -72,6 +92,8 @@ export const AuthContextProvider = ({ children }) => {
     } catch (error) {
       let msg = error.message;
       if (msg.includes("(auth/invalid-email)")) msg = "Invalid email";
+      if (msg.includes("(auth/email-already-in-use)"))
+        msg = "This email is already in use";
       return { success: false, msg };
     }
   };
