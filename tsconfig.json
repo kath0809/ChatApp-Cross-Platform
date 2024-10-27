@@ -14,5 +14,5 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts"
-, "context/authContext.js", "components/HomeHeader.tsx", "components/CustomMenuItems.tsx"  ]
+, "context/authContext.js", "components/HomeHeader.tsx", "components/CustomMenuItems.tsx", "components/ChatList.tsx", "app/(tabs)/home.js"  ]
 }
