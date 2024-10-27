@@ -17,7 +17,7 @@ interface ChatItemProps {
   router: ReturnType<typeof useRouter>;
   index: number;
 }
-
+ 
 const ChatItem: React.FC<ChatItemProps> = ({
   item,
   noBorder,
@@ -25,7 +25,10 @@ const ChatItem: React.FC<ChatItemProps> = ({
   index,
 }) => {
   const openChatRoom = () => {
-    //router.push({ pathname: "/chatRoom", state: { item } });
+    router.push({
+      pathname: "/chatRoom",
+      params: { item: JSON.stringify(item) },
+    });
   };
 
   return (
